@@ -1,14 +1,17 @@
+import strawberry
 
-print("hello from api.py")
-print("new change")
+from fastapi import FastAPI
+from strawberry.fastapi import GraphQLRouter
 
-print("new change 2")
-print("new change 3")
-print("new change 4")
-print("new change 5")
-print("new change 6")
-print("new change 7")
-print("new change 8")
-print("new change 9")
-print("new change 10")
-print("new change 11")
+@strawberry.type
+class Query:
+    @ strawberry.field
+    def hello(self) -> str:
+        return "hello world!"
+
+schema = strawberry.Schema(Query)    
+
+gql_app = GraphQLRouter(schema)
+
+app = FastAPI()
+app.include_router(gql_app, prefix="/hello")
