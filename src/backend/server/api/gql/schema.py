@@ -1,6 +1,6 @@
 import strawberry
 
-from strawberry.asgi import GraphQLRouter
+from strawberry.fastapi import GraphQLRouter
 
 from .resolvers import gql_test
 
