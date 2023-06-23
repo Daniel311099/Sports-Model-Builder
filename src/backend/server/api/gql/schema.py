@@ -1,9 +1,9 @@
 import strawberry
 
+from .resolvers import gql_test
+
 @strawberry.type
 class Query:
-    @ strawberry.field
-    def hello(self) -> str:
-        return "hello world!"
-
+    test = strawberry.field(gql_test)
+    
 schema = strawberry.Schema(Query)    
