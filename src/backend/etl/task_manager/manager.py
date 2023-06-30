@@ -22,7 +22,7 @@ def main():
 
     tasks = task_generator()
     for task in tasks:
-        channel.basic_publish(exchange='', routing_key='scrape tasks', body=task)
+        channel.basic_publish(exchange='', routing_key='scrape tasks', body=task.id_)
         print(" [x] Sent %r" % task)
         write_tasks(task)
     connection.close()
