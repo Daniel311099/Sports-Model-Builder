@@ -1,3 +1,4 @@
 strawberry-graphql[fastapi]
 fastapi
 strawberry-graphql[debug-server]
+requests

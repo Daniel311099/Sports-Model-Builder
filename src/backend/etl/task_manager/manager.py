@@ -2,12 +2,13 @@ import pika, json, os
 from dotenv import load_dotenv
 load_dotenv()
 
-from data.types import ScrapeTask
+from etl.scraper.types import ScrapeTask
 
 DRIVE_PATH = os.getenv('DRIVE_PATH')
 ids = [62619652, 65448666]
 
 def task_generator():
+    
     for id_ in ids:
         yield ScrapeTask(id_=id_, num_pages=25)
 

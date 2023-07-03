@@ -54,7 +54,7 @@ def fetch_match_likes(id_, pages):
         ratings.append(sorted_ratings)
     return ratings
 
-def fetch_match_comments_likes(id_):
+def fetch_match_comments_likes(id_) -> list[tuple[dict, dict]]:
     pages = get_num_pages(id_)
     comments = fetch_match_comments(id_, pages)
     ratings = fetch_match_likes(id_, pages)
