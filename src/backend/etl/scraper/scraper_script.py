@@ -14,7 +14,7 @@ def load_task(id: int):
         task = filter(lambda x: x['id'] == id, tasks)[0]
     return ScrapeTask(**task)
 
-def bui_transform_task(task: ScrapeTask, data: ScrapeResult):
+def get_transform_task(task: ScrapeTask, data: ScrapeResult):
     task_id = 1 # randomly generate id
     transform_task = TransformTask(
         id_=task_id,
