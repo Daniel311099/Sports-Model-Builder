@@ -8,12 +8,11 @@ DRIVE_PATH = os.getenv('DRIVE_PATH')
 ids = [62619652, 65448666]
 
 def task_generator():
-    
     for id_ in ids:
         yield ScrapeTask(id_=id_, num_pages=25)
 
 def write_tasks(task: ScrapeTask):
-    with open(f'{DRIVE_PATH}/scraper/tasks.json', 'w') as f:
+    with open(f'{DRIVE_PATH}tasks/scraper/tasks.json', 'w') as f:
         json.dump(task.json(), f)
 
 def main():

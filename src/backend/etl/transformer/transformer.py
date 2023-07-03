@@ -7,6 +7,5 @@ class Transformer():
         pass
 
     def resolve_task(self, task: TransformTask):
-        pass
+        return []
 
-    
