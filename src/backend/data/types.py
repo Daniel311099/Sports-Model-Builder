@@ -6,7 +6,3 @@ from dataclasses import dataclass
 class Game:
     id_: int
 
-@dataclass
-class TransformTask:
-    id_: int
-    scraper_task_id: int

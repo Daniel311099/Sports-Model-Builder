@@ -9,3 +9,4 @@ class Transformer():
     def resolve_task(self, task: TransformTask):
         return []
 
+    # def remove_task(self, task: TransformTask):
