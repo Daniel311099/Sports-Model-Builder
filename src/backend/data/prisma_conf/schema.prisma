@@ -1,12 +1,18 @@
 // database
 datasource db {
-  provider = "sqlite"
-  url      = "file:database.db"
+  provider = "mysql"
+  url      = env("DB_URL")
 }
 
 // generator
 generator client {
   provider             = "prisma-client-py"
   recursive_type_depth = 5
-  interface = "asyncio"
+}
+
+// demo model
+model User {
+  id    Int    @id @default(autoincrement())
+  email String @unique
+  name  String
 }
