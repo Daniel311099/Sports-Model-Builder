@@ -12,6 +12,7 @@ def load_load_task(id: int):
     with open(f'{DRIVE_PATH}tasks/loader/tasks.json', 'r') as f:
         tasks = json.load(f)
         task = filter(lambda x: x['id'] == id, tasks)[0]
+    
     return LoadTask(**task)
 
 def build_callback(channel: Channel, loader: Loader):
