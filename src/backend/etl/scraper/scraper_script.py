@@ -62,5 +62,3 @@ if __name__ == "__main__":
             sys.exit(0)
         except SystemExit:
             os._exit(0)
-
-    # vs code shortcut to switch between each terminal window not between editor and termianl: c

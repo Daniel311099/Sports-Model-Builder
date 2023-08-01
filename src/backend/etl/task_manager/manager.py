@@ -2,27 +2,28 @@ import pika, json, os
 from dotenv import load_dotenv
 load_dotenv()
 
-from etl.scraper.types import ScrapeTask
+from etl.scraper.types import ScrapeTask, OPTIONS
 
 DRIVE_PATH = os.getenv('DRIVE_PATH')
 ids = [62619652, 65448666]
 
 def task_generator():
     for id_ in ids:
-        yield ScrapeTask(id_=id_, num_pages=25)
+        source: OPTIONS = 'bbc_sport'
+        yield ScrapeTask(id_=id_, source=source)
 
 def write_tasks(task: ScrapeTask):
     with open(f'{DRIVE_PATH}tasks/scraper/tasks.json', 'w') as f:
-        json.dump(task.json(), f)
+        json.dump(task, f)
 
 def main():
     connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
     channel = connection.channel()
-    channel.queue_declare(queue='scrape tasks')
+    channel.queue_declare(queue='scrape tasks') # type: ignore
 
     tasks = task_generator()
     for task in tasks:
-        channel.basic_publish(exchange='', routing_key='scrape tasks', body=task.id_)
+        channel.basic_publish(exchange='', routing_key='scrape tasks', body=str(task.id_))
         print(" [x] Sent %r" % task)
         write_tasks(task)
     connection.close()
