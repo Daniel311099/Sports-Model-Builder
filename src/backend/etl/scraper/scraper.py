@@ -3,7 +3,7 @@ import os, json
 from dotenv import load_dotenv
 from typing import Literal, Type, TypedDict, Callable, Any
 
-from bbc_sport_scraper import fetch_match_comments_likes
+# from bbc_sport_scraper import fetch_match_comments_likes 
 from backend.etl.scraper.types import ScrapeResult, ScrapeTask, ScrapedData, Sources, OPTIONS, ScraperResolverCallback, build_custom_dict, f1, f2
 from backend.etl.transformer.types import TransformTask
 
