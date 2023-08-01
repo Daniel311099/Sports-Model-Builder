@@ -1,18 +1,30 @@
-from typing import Literal
-from enum import Enum
+# from typing import Literal
 from dataclasses import dataclass
+from typing import Literal, Type, TypedDict, Callable, TypeVar, Generic
 
 # create an enum type for scraper type 
-class ScraperType(str, Enum):
-    bbc_sport = 'bbc_sport'
 
-bbc_sport_scraper = ScraperType.bbc_sport
+T = TypeVar('T')
+
+OPTIONS = Literal[
+    'bbc_sport',
+    'twitter',
+    # 'reddit',
+]
+
+class Sources(TypedDict, Generic[T]):
+    bbc_sport: T
+    twitter: T
+    # reddit: T
+
+def build_custom_dict(t: Type[T]) -> Type[Sources[T]]:
+    return Sources[t]
 
 @dataclass
 class ScrapeTask:
     id_: int
-    num_pages: int
-    scraper_type: ScraperType
+    # num_pages: int
+    source: OPTIONS
 
 @dataclass
 class ScrapedData:
@@ -21,4 +33,27 @@ class ScrapedData:
 
 @dataclass
 class ScrapeResult:
-    pass
+    data: list[ScrapedData]
+
+ScraperResolverCallback = Callable[[ScrapeTask], ScrapeResult]
+
+#####################################################
+
+
+def f1(x: ScrapeTask) -> ScrapeResult:
+    return ScrapeResult([])
+
+def f2(x: ScrapeTask) -> ScrapeResult:
+    return ScrapeResult([])
+
+
+Res = build_custom_dict(ScraperResolverCallback)
+res = Res(
+    bbc_sport=f1,
+    twitter=f2,
+    # reddit=f2,
+)
+
+s: OPTIONS = 'bbc_sport'
+
+g = res[s](ScrapeTask(id_=1, source='bbc_sport')).data
