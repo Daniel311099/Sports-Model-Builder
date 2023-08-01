@@ -8,11 +8,13 @@ from scraper import Scraper
 dotenv.load_dotenv()
 DRIVE_PATH = os.getenv('DRIVE_PATH')
 
-def load_task(id: int):
+def load_task(id: int) -> ScrapeTask:
     with open(f'{DRIVE_PATH}tasks/scraper/tasks.json', 'r') as f:
-        tasks = json.load(f)
-        task = filter(lambda x: x['id'] == id, tasks)[0]
-    return ScrapeTask(**task)
+        tasks: list[ScrapeTask] = json.load(f) # type: ignore
+        task  = tuple(filter(lambda x: x['id_'] == id, tasks))
+    if len(task) == 0:
+        raise ValueError(f'No task with id {id} found')
+    return task[0]
 
 def get_transform_task(task: ScrapeTask, data: ScrapeResult):
     task_id = 1 # randomly generate id
