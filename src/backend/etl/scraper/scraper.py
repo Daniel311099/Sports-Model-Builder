@@ -13,7 +13,7 @@ DRIVE_PATH = os.getenv('DRIVE_PATH')
 
 ResolverType = build_custom_dict(ScraperResolverCallback)
 
-RESOLVERS = ResolverType(
+RESOLVERS = Sources[ScraperResolverCallback](
     bbc_sport=f1,
     twitter=f2,
 )
@@ -24,7 +24,7 @@ class Scraper:
         pass
 
     def resolve_task(self, task: ScrapeTask):
-        resolver = RESOLVERS[task.source]
+        resolver = RESOLVERS[task['source']]
         return resolver(task)
 
     def save_data(self, task_id: int, data: list[ScrapedData]):
