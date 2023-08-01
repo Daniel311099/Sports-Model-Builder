@@ -1,7 +1,30 @@
 import requests, json
 from bs4 import BeautifulSoup
 
-def fetch_matchday_page_comments(page_num: int, id_: int=62619652):
+from typing import Any, TypedDict, Optional
+
+from backend.etl.scraper.types_ import ScrapedData, ScrapeResult, ScrapeTask
+
+class BBCSportRating(TypedDict):
+    likes: int
+    dislikes: int
+
+class BBCSportComment(TypedDict):
+    id_: int
+    text: str
+
+class BBCSPortCommentRating(TypedDict):
+    comment: BBCSportComment
+    rating: BBCSportRating
+
+def find_comment_text(comment: dict[str, Any]):
+    for key, value in comment.items():
+        try:
+            return comment['text']
+        except:
+            return find_comment_text(comment)
+
+def fetch_matchday_page_comments(page_num: int, id_: int) -> list[BBCSportComment]:
     url = "https://push.api.bbci.co.uk/batch"
     # id_ = 62619652
     # id_ = 65448666
@@ -11,7 +34,15 @@ def fetch_matchday_page_comments(page_num: int, id_: int=62619652):
     # headers = {"Path": f"/batch?t=%2Fdata%2Fbbc-morph-lx-commentary-data-paged%2FassetUri%2F%252Fsport%252Flive%252Ffootball%252F65448666%2FisUk%2Ftrue%2Flimit%2F20%2FnitroKey%2Flx-nitro%2FpageNumber%2F{page_num}%2FserviceName%2Fnews%2Fversion%2F1.5.6?timeout=5"}
     response = requests.request("GET", url, params=querystring)
     print(response.text)
-    return response.text
+    page_comments = json.loads(response.text)['payload'][0]['body']['results'] 
+    
+    return [
+        BBCSportComment(
+            id_=comment['id'],
+            text=comment['body']['text'],
+        )
+        for comment in page_comments
+    ]
 
 def get_num_pages(id_: int):
     class_name = "qa-pagination-total-page-number"
@@ -19,22 +50,22 @@ def get_num_pages(id_: int):
     response = requests.request("GET", url)
     html = response.text
     soup = BeautifulSoup(html, 'html.parser')
-    num_pages = soup.find(class_=class_name).text
-    return int(num_pages)
+    num_pages = soup.find(class_=class_name)
+    if num_pages is None:
+        return 0
+    return int(num_pages.text)
 
 def fetch_page_comment_likes(page_num: int, id_: int):
     url = "https://push.api.bbci.co.uk/batch"
     # https://push.api.bbci.co.uk/batch?t=%2Fdata%2Fbbc-morph-lx-stream-reaction-counts-data%2FassetUri%2F%252Fsport%252Flive%252Ffootball%252F65448666%2FisUk%2Ftrue%2Flimit%2F20%2FnitroKey%2Flx-nitro%2FpageNumber%2F28%2Fversion%2F2.0.17?timeout=5
     querystring = {"t":f"/data/bbc-morph-lx-stream-reaction-counts-data/assetUri/%2Fsport%2Flive%2Ffootball%2F{id_}/isUk/true/nitroKey/lx-nitro/pageNumber/{page_num}/version/2.0.17?timeout=5"}
     response = requests.request("GET", url, params=querystring)
-    print(response.text)
     return response.text
 
-def fetch_match_comments(id_, pages):
-    comments = []
+def fetch_match_comments(id_: int, pages: int):
+    comment = []
     for page in range(1, pages+1):
         page_comments = fetch_matchday_page_comments(page, id_)
-        page_comments = json.loads(page_comments)['payload'][0]['body']['results'] 
         if not page_comments:
             comments.append([])
             continue
@@ -42,7 +73,7 @@ def fetch_match_comments(id_, pages):
         comments.append(sorted_comments)
     return comments
 
-def fetch_match_likes(id_, pages):
+def fetch_match_likes(id_: int, pages: int):
     ratings = []
     for page in range(1, pages+1):
         page_ratings = fetch_page_comment_likes(page, id_)
@@ -54,7 +85,7 @@ def fetch_match_likes(id_, pages):
         ratings.append(sorted_ratings)
     return ratings
 
-def fetch_match_comments_likes(id_) -> list[tuple[dict, dict]]:
+def fetch_match_comments_likes(id_: int) -> ScrapeResult:
     pages = get_num_pages(id_)
     comments = fetch_match_comments(id_, pages)
     ratings = fetch_match_likes(id_, pages)

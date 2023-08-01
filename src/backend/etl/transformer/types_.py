@@ -2,7 +2,7 @@ from typing import Literal
 from enum import Enum
 from dataclasses import dataclass
 
-from backend.etl.scraper.types import ScrapeTask, ScrapeResult
+from backend.etl.scraper.types_ import ScrapeTask, ScrapeResult
 
 @dataclass
 class TransformTask:

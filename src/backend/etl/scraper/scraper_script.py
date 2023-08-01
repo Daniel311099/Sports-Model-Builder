@@ -1,18 +1,24 @@
+from typing import Any
 import dotenv, json, os, pika, sys
-from pika.channel import Channel
+# import deliver and basic properties from pika
+from pika import BasicProperties
 
-from backend.etl.scraper.types import ScrapeTask, ScrapeResult
-from backend.etl.transformer.types import TransformTask
+from pika.adapters.blocking_connection import BlockingChannel
+
+from backend.etl.scraper.types_ import ScrapeTask, ScrapeResult
+from backend.etl.transformer.types_ import TransformTask
 from scraper import Scraper
 
 dotenv.load_dotenv()
 DRIVE_PATH = os.getenv('DRIVE_PATH')
 
-def load_task(id: int):
+def load_task(id: int) -> ScrapeTask:
     with open(f'{DRIVE_PATH}tasks/scraper/tasks.json', 'r') as f:
-        tasks = json.load(f)
-        task = filter(lambda x: x['id'] == id, tasks)[0]
-    return ScrapeTask(**task)
+        tasks: list[ScrapeTask] = json.load(f) # type: ignore
+        task  = tuple(filter(lambda x: x['id_'] == id, tasks))
+    if len(task) == 0:
+        raise ValueError(f'No task with id {id} found')
+    return task[0]
 
 def get_transform_task(task: ScrapeTask, data: ScrapeResult):
     task_id = 1 # randomly generate id
@@ -25,21 +31,21 @@ def get_transform_task(task: ScrapeTask, data: ScrapeResult):
 
 def write_trasnform_task(transform_task: TransformTask):
     with open(f'{DRIVE_PATH}tasks/transformer/tasks.json', 'w') as f:
-        json.dump(transform_task.json(), f)
+        json.dump(transform_task, f)
 
-def build_callback(channel: Channel, scraper: Scraper): 
-    def callback(ch, method, properties, body):
-        print(" [x] Received %r" % body)
-        id_ = body.decode('utf-8')
+def build_callback(channel: BlockingChannel, scraper: Scraper): 
+    def callback(ch: BlockingChannel, method: Any, properties: BasicProperties, body: bytes): 
+        print(" [x] Received %r" % body) 
+        id_ = int(body.decode('utf-8'))
         task_data = load_task(id_)
         data = scraper.resolve_task(task_data)
 
         transform_task = get_transform_task(task_data, data)
         write_trasnform_task(transform_task)
         
-        channel.basic_publish(exchange='', routing_key='transform tasks', body=transform_task.id_)
+        channel.basic_publish(exchange='', routing_key='transform tasks', body=str(transform_task.id_))
         scraper.remove_task(task_data)
-        return callback
+    return callback
         # save raw data to file for temporary storage
         # send message to transformer queue
 
@@ -61,4 +67,4 @@ if __name__ == "__main__":
         try:
             sys.exit(0)
         except SystemExit:
-            os._exit(0)
+            os._exit(0) # type: ignore

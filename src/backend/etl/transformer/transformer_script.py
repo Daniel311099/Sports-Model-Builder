@@ -2,7 +2,7 @@ import os, json, pika, sys
 from dotenv import load_dotenv
 from pika.channel import Channel
 
-from backend.etl.transformer.types import TransformResult, TransformTask
+from backend.etl.transformer.types_ import TransformResult, TransformTask
 from transformer import Transformer
 
 load_dotenv()

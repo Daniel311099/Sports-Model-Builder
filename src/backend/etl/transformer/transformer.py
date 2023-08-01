@@ -1,6 +1,6 @@
 
 
-from transformer.types import TransformTask
+from backend.etl.transformer.types_ import TransformTask
 
 class Transformer():
     def __init__(self):
