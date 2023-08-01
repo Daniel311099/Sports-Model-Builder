@@ -2,7 +2,7 @@ import pika, json, os
 from dotenv import load_dotenv
 load_dotenv()
 
-from etl.scraper.types import ScrapeTask, OPTIONS
+from backend.etl.scraper.types_ import ScrapeTask, OPTIONS
 
 DRIVE_PATH = os.getenv('DRIVE_PATH')
 ids = [62619652, 65448666]

@@ -5,8 +5,8 @@ from pika import BasicProperties
 
 from pika.adapters.blocking_connection import BlockingChannel
 
-from backend.etl.scraper.types import ScrapeTask, ScrapeResult
-from backend.etl.transformer.types import TransformTask
+from backend.etl.scraper.types_ import ScrapeTask, ScrapeResult
+from backend.etl.transformer.types_ import TransformTask
 from scraper import Scraper
 
 dotenv.load_dotenv()
@@ -36,7 +36,7 @@ def write_trasnform_task(transform_task: TransformTask):
 def build_callback(channel: BlockingChannel, scraper: Scraper): 
     def callback(ch: BlockingChannel, method: Any, properties: BasicProperties, body: bytes): 
         print(" [x] Received %r" % body) 
-        id_ = int(body.decode('utf-8')) # type: ignore
+        id_ = int(body.decode('utf-8'))
         task_data = load_task(id_)
         data = scraper.resolve_task(task_data)
 

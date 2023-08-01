@@ -1,11 +1,11 @@
-from enum import Enum
+# from enum import Enum
 import os, json
 from dotenv import load_dotenv
-from typing import Literal, Type, TypedDict, Callable, Any
+# from typing import Literal, Type, TypedDict, Callable, Any
 
-# from bbc_sport_scraper import fetch_match_comments_likes 
-from backend.etl.scraper.types import ScrapeResult, ScrapeTask, ScrapedData, Sources, OPTIONS, ScraperResolverCallback, build_custom_dict, f1, f2
-from backend.etl.transformer.types import TransformTask
+from extractors.bbc_sport_scraper import fetch_match_comments_likes 
+from backend.etl.scraper.types_ import ScrapeResult, ScrapeTask, ScrapedData, Sources, ScraperResolverCallback, build_custom_dict, f1
+from backend.etl.transformer.types_ import TransformTask
 
 load_dotenv()
 
@@ -14,8 +14,8 @@ DRIVE_PATH = os.getenv('DRIVE_PATH')
 ResolverType = build_custom_dict(ScraperResolverCallback)
 
 RESOLVERS = Sources[ScraperResolverCallback](
-    bbc_sport=f1,
-    twitter=f2,
+    bbc_sport=fetch_match_comments_likes,
+    # twitter=f2,
 )
 
 

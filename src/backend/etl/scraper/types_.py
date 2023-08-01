@@ -8,13 +8,13 @@ T = TypeVar('T')
 
 OPTIONS = Literal[
     'bbc_sport',
-    'twitter',
+    # 'twitter',
     # 'reddit',
 ]
 
 class Sources(TypedDict, Generic[T]):
     bbc_sport: T
-    twitter: T
+    # twitter: T
     # reddit: T
 
 def build_custom_dict(t: Type[T]) -> Type[Sources[T]]:
@@ -48,7 +48,7 @@ def f2(x: ScrapeTask) -> ScrapeResult:
 
 res = Sources[ScraperResolverCallback](
     bbc_sport=f1,
-    twitter=f2,
+    # twitter=f2,
     # reddit=f2,
 )
 
