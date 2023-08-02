@@ -1,11 +1,12 @@
 import requests, json
 from bs4 import BeautifulSoup
 
-from typing import Any, TypedDict, Optional
+from typing import Any, TypedDict
 
 from backend.etl.scraper.types_ import ScrapedData, ScrapeResult, ScrapeTask
 
 class BBCSportRating(TypedDict):
+    comment_id: int
     likes: int
     dislikes: int
 
@@ -18,11 +19,18 @@ class BBCSPortCommentRating(TypedDict):
     rating: BBCSportRating
 
 def find_comment_text(comment: dict[str, Any]):
-    for key, value in comment.items():
-        try:
-            return comment['text']
-        except:
-            return find_comment_text(comment)
+    try:
+        return str(comment['text'])
+    except KeyError:
+        for key, value in comment.items(): # type: ignore
+            if isinstance(value, str):
+                continue
+            elif type(value) == dict[str, Any]:
+                child = find_comment_text(value) # type: ignore
+                if isinstance(child, str):
+                    return child
+        else:
+            return None
 
 def fetch_matchday_page_comments(page_num: int, id_: int) -> list[BBCSportComment]:
     url = "https://push.api.bbci.co.uk/batch"
@@ -34,12 +42,12 @@ def fetch_matchday_page_comments(page_num: int, id_: int) -> list[BBCSportCommen
     # headers = {"Path": f"/batch?t=%2Fdata%2Fbbc-morph-lx-commentary-data-paged%2FassetUri%2F%252Fsport%252Flive%252Ffootball%252F65448666%2FisUk%2Ftrue%2Flimit%2F20%2FnitroKey%2Flx-nitro%2FpageNumber%2F{page_num}%2FserviceName%2Fnews%2Fversion%2F1.5.6?timeout=5"}
     response = requests.request("GET", url, params=querystring)
     print(response.text)
-    page_comments = json.loads(response.text)['payload'][0]['body']['results'] 
+    page_comments: list[dict[str, Any]] = json.loads(response.text)['payload'][0]['body']['results'] 
     
     return [
         BBCSportComment(
-            id_=comment['id'],
-            text=comment['body']['text'],
+            id_=comment['assetId'],
+            text=find_comment_text(comment) or "",
         )
         for comment in page_comments
     ]
@@ -60,42 +68,56 @@ def fetch_page_comment_likes(page_num: int, id_: int):
     # https://push.api.bbci.co.uk/batch?t=%2Fdata%2Fbbc-morph-lx-stream-reaction-counts-data%2FassetUri%2F%252Fsport%252Flive%252Ffootball%252F65448666%2FisUk%2Ftrue%2Flimit%2F20%2FnitroKey%2Flx-nitro%2FpageNumber%2F28%2Fversion%2F2.0.17?timeout=5
     querystring = {"t":f"/data/bbc-morph-lx-stream-reaction-counts-data/assetUri/%2Fsport%2Flive%2Ffootball%2F{id_}/isUk/true/nitroKey/lx-nitro/pageNumber/{page_num}/version/2.0.17?timeout=5"}
     response = requests.request("GET", url, params=querystring)
-    return response.text
+    page_ratings = json.loads(response.text)['payload'][0]['body']['postReactions']
+    return [
+        BBCSportRating(
+            comment_id=rating[0],
+            likes=rating['likes'],
+            dislikes=rating['dislikes'],
+        )
+        for rating in page_ratings
+    ]
 
 def fetch_match_comments(id_: int, pages: int):
-    comment = []
+    comments: list[list[BBCSportComment]] = []
     for page in range(1, pages+1):
         page_comments = fetch_matchday_page_comments(page, id_)
         if not page_comments:
             comments.append([])
             continue
-        sorted_comments = sorted(page_comments, key=lambda x: x['assetId'])
+        sorted_comments = sorted(page_comments, key=lambda x: x['id_'])
         comments.append(sorted_comments)
     return comments
 
 def fetch_match_likes(id_: int, pages: int):
-    ratings = []
+    ratings: list[list[BBCSportRating]] = []
     for page in range(1, pages+1):
         page_ratings = fetch_page_comment_likes(page, id_)
-        page_ratings = json.loads(page_ratings)['payload'][0]['body']['postReactions']
         if not page_ratings:
             ratings.append([])
             continue
-        sorted_ratings = sorted(page_ratings.items(), key=lambda x: x[0])
+        sorted_ratings = sorted(page_ratings, key=lambda x: x['comment_id'])
         ratings.append(sorted_ratings)
     return ratings
 
-def fetch_match_comments_likes(id_: int) -> ScrapeResult:
+def fetch_match_comments_likes(task: ScrapeTask) -> ScrapeResult[BBCSPortCommentRating]:
+    id_ = task['id_']
     pages = get_num_pages(id_)
     comments = fetch_match_comments(id_, pages)
     ratings = fetch_match_likes(id_, pages)
-    comment_ratings = []
+    comment_ratings = ScrapeResult[BBCSPortCommentRating](data=[])
     for page_comments, page_ratings in zip(comments, ratings):
         if len(page_comments) != len(page_ratings):
             # comment_ratings.append(())
             continue
         for c, r in zip(page_comments, page_ratings):
-            comment_ratings.append((c, r))
+            comment_ratings.data.append(ScrapedData[BBCSPortCommentRating](
+                id_ = c['id_'],
+                data= BBCSPortCommentRating(
+                    comment = c,
+                    rating = r,
+                ))
+            )
     return comment_ratings
 
 # url = "https://push.api.bbci.co.uk/batch"
