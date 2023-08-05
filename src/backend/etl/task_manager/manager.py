@@ -1,33 +1,47 @@
-import pika, json, os
-from dotenv import load_dotenv
-load_dotenv()
+import json
+from typing import Any
 
-from backend.etl.scraper.types_ import ScrapeTask, OPTIONS
+from pika import BasicProperties
+from pika.adapters.blocking_connection import BlockingChannel
 
-DRIVE_PATH = os.getenv('DRIVE_PATH')
-ids = [62619652, 65448666]
+from types_ import Task, Response
 
-def task_generator():
-    for id_ in ids:
-        source: OPTIONS = 'bbc_sport'
-        yield ScrapeTask(id_=id_, source=source)
+class Manager():
+    def __init__(
+            self,
+            scraper_channel: BlockingChannel,
+    ) -> None:
+        self.scraper_channel = scraper_channel
 
-def write_tasks(task: ScrapeTask):
-    with open(f'{DRIVE_PATH}tasks/scraper/tasks.json', 'w') as f:
-        json.dump(task, f)
+    def build_res_callback(self) -> Any: 
+        def callback(ch: BlockingChannel, method: Any, properties: BasicProperties, body: bytes): 
+            res_data = body.decode('utf-8')
+            res_json = json.loads(res_data)
+            res = Response(**res_json)            
 
-def main():
-    connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
-    channel = connection.channel()
-    channel.queue_declare(queue='scrape tasks') # type: ignore
+            if res['success']:
+                resolved = self.handle_success_response(res)
+                # move logic to handle_success_response
+                task_body =  resolved
+                queue = ''            
+                self.scraper_channel.basic_publish(exchange='', routing_key=queue, body=task_body)
 
-    tasks = task_generator()
-    for task in tasks:
-        channel.basic_publish(exchange='', routing_key='scrape tasks', body=str(task.id_))
-        print(" [x] Sent %r" % task)
-        write_tasks(task)
-    connection.close()
+            else:
+                resolved = self.handle_failure_response(res)
+                task_body =  resolved
+                queue = ''
+                self.scraper_channel.basic_publish(exchange='', routing_key=queue, body=task_body)
+        return callback
 
-if __name__ == "__main__":
-    main()
-    
+    def handle_success_response(self, res: Response[Any]) -> Any:
+        ...
+        # save response to ledger
+        # log success
+        # send message to next queue
+
+    def handle_failure_response(self, res: Response[Any]) -> Any:
+        ...
+        # save response to ledger
+        # log failure
+        # retry task
+        

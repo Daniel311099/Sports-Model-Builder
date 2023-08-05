@@ -20,7 +20,7 @@ def load_task(id: int) -> ScrapeTask:
         raise ValueError(f'No task with id {id} found')
     return task[0]
 
-def get_transform_task(task: ScrapeTask, data: ScrapeResult):
+def get_transform_task(task: ScrapeTask, data: ScrapeResult[Any]):
     task_id = 1 # randomly generate id
     transform_task = TransformTask(
         id_=task_id,
@@ -40,7 +40,12 @@ def build_callback(channel: BlockingChannel, scraper: Scraper):
         task_data = load_task(id_)
         data = scraper.resolve_task(task_data)
 
+        # store result to disk
+        # check completion
+        # respond to task manager  
+
         transform_task = get_transform_task(task_data, data)
+        
         write_trasnform_task(transform_task)
         
         channel.basic_publish(exchange='', routing_key='transform tasks', body=str(transform_task.id_))
