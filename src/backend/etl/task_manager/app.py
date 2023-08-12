@@ -3,9 +3,14 @@ from manager import Manager
 # parse command line arguments
 # if cli flag then run cli
 def main():
-    manager = Manager()
     # main2 script
-    job = input('Enter job: ')
+    manager = Manager()
+    manager.run()
+
+    # if flag render cli
+    app = App(manager)
+    # app fetchtes all data from manager
+    app.render()
     # on new job
         # pause schedule
         # add job to ledger
@@ -14,3 +19,11 @@ def main():
         # update schedule
         # resume schedule
             # add tasks to queue
+
+
+class App:
+    def __init__(self, manager: Manager)):
+        self.manager = manager
+
+    def render(self):
+        ...
